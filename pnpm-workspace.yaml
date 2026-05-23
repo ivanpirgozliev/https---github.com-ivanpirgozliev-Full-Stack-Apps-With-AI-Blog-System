@@ -2,5 +2,6 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
+  msgpackr-extract: true
   sharp: true
   unrs-resolver: true

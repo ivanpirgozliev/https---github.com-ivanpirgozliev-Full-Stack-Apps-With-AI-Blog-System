@@ -8,6 +8,12 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "@blog/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@blog/shared/*": [
+        "../../packages/shared/src/*"
       ]
     }
   },
