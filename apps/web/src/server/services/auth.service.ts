@@ -4,15 +4,12 @@ import type { PublicUser } from "@blog/shared";
 import { db } from "../db/client";
 import { users } from "../db/schema";
 import { signToken } from "../lib/jwt";
+import { err, ok, type ServiceResult } from "../lib/result";
 import { getUserByEmail, normalizeEmail, toPublicUser } from "./users.service";
 
 export { verifyToken } from "../lib/jwt";
 
 const BCRYPT_ROUNDS = 10;
-
-export type ServiceResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string } };
 
 export interface AuthSuccess {
   user: PublicUser;
@@ -36,10 +33,7 @@ export async function registerUser(input: {
 
   const existing = await getUserByEmail(email);
   if (existing) {
-    return {
-      ok: false,
-      error: { code: "EMAIL_TAKEN", message: "An account with this email already exists." },
-    };
+    return err("EMAIL_TAKEN", "An account with this email already exists.");
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -54,14 +48,11 @@ export async function registerUser(input: {
     .returning();
 
   if (!created) {
-    return {
-      ok: false,
-      error: { code: "INSERT_FAILED", message: "Failed to create the user." },
-    };
+    return err("INSERT_FAILED", "Failed to create the user.");
   }
 
   const token = await signToken({ sub: created.id, role: created.role });
-  return { ok: true, data: { user: toPublicUser(created), token } };
+  return ok({ user: toPublicUser(created), token });
 }
 
 export async function loginUser(input: {
@@ -75,12 +66,9 @@ export async function loginUser(input: {
   const passwordOk = await comparePassword(input.password, targetHash);
 
   if (!user || !passwordOk) {
-    return {
-      ok: false,
-      error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password." },
-    };
+    return err("INVALID_CREDENTIALS", "Invalid email or password.");
   }
 
   const token = await signToken({ sub: user.id, role: user.role });
-  return { ok: true, data: { user: toPublicUser(user), token } };
+  return ok({ user: toPublicUser(user), token });
 }
