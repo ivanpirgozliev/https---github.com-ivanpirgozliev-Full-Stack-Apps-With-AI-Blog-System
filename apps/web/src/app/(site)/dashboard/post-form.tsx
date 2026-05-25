@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ImagePicker } from "@/components/image-picker";
 import "@uiw/react-md-editor/markdown-editor.css";
 
 // Heavy markdown editor — only loaded on the client.
@@ -102,27 +103,30 @@ export function PostForm({ categories, initial, serverAction, submitLabel }: Pos
         />
       </Field>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <Field
-          label="Cover image URL"
-          htmlFor="coverImageUrl"
-          error={errors.coverImageUrl?.message}
-          hint="Optional. https://… image URL."
-        >
-          <input id="coverImageUrl" type="url" {...register("coverImageUrl")} className="input" />
-        </Field>
+      <Field
+        label="Cover image"
+        htmlFor="coverImageUrl"
+        error={errors.coverImageUrl?.message}
+      >
+        <Controller
+          name="coverImageUrl"
+          control={control}
+          render={({ field }) => (
+            <ImagePicker value={field.value} onChange={field.onChange} />
+          )}
+        />
+      </Field>
 
-        <Field label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>
-          <select id="categoryId" {...register("categoryId")} className="select">
-            <option value="">— None —</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+      <Field label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>
+        <select id="categoryId" {...register("categoryId")} className="select">
+          <option value="">— None —</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Status" htmlFor="status" error={errors.status?.message}>
         <select id="status" {...register("status")} className="select">
