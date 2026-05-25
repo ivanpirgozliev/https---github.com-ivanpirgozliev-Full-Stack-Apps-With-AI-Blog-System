@@ -1,6 +1,14 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# Hoist everything to the root node_modules so Metro/Expo can resolve
+# transitive peer deps (e.g. @babel/runtime). pnpm 10+ moved these settings
+# from .npmrc to pnpm-workspace.yaml.
+nodeLinker: hoisted
+publicHoistPattern:
+  - '*'
+
 allowBuilds:
   esbuild: true
   msgpackr-extract: true
