@@ -14,6 +14,12 @@ import {
   type NewPost,
   type NewUser,
 } from "../src/server/db/schema";
+import {
+  makeComment,
+  makeContent,
+  makeExcerpt,
+  makeTitle,
+} from "./lib/content";
 
 config({ path: [".env.local", ".env"] });
 
@@ -40,16 +46,16 @@ const ADMIN_EMAIL = "admin@blog.local";
 const ADMIN_PASSWORD = "Admin123!";
 const REGULAR_PASSWORD = "User123!";
 
-const CATEGORY_NAMES = [
-  "Technology",
-  "Travel",
-  "Food",
-  "Lifestyle",
-  "Business",
-  "Science",
-  "Arts",
-  "Health",
-] as const;
+const CATEGORIES: Array<{ name: string; description: string }> = [
+  { name: "Technology", description: "Software, hardware, and the tools that build the modern web." },
+  { name: "Travel", description: "Notes from the road — places, people, and the logistics of getting around." },
+  { name: "Food", description: "Recipes, restaurants, and the small habits that make a kitchen work." },
+  { name: "Lifestyle", description: "Living deliberately — routines, hobbies, and finding time for both." },
+  { name: "Business", description: "Building, running, and learning from companies of every size." },
+  { name: "Science", description: "Discoveries, experiments, and the questions still worth asking." },
+  { name: "Arts", description: "Music, film, design, and the craft behind the work." },
+  { name: "Health", description: "Physical and mental wellbeing — what works, what doesn't, and why." },
+];
 
 function slugify(s: string): string {
   return s
@@ -95,10 +101,10 @@ async function seed() {
   const insertedCategories = await db
     .insert(categories)
     .values(
-      CATEGORY_NAMES.map((name) => ({
+      CATEGORIES.map(({ name, description }) => ({
         name,
         slug: slugify(name),
-        description: faker.lorem.sentence(),
+        description,
       })),
     )
     .returning();
@@ -110,15 +116,15 @@ async function seed() {
     const size = Math.min(BATCH, TOTAL_POSTS - i);
     const batch: NewPost[] = Array.from({ length: size }, (_, j) => {
       const idx = i + j;
-      const title = faker.lorem.sentence({ min: 5, max: 10 }).replace(/\.$/, "");
+      const title = makeTitle();
       const isPublished = Math.random() < 0.9;
       const hasCategory = Math.random() < 0.95;
       return {
         authorId: pick(insertedUsers).id,
         title,
         slug: `${slugify(title)}-${idx}`,
-        excerpt: faker.lorem.sentence(),
-        content: faker.lorem.paragraphs(3, "\n\n"),
+        excerpt: makeExcerpt(),
+        content: makeContent(),
         coverImageUrl: Math.random() < 0.5 ? faker.image.url({ width: 800, height: 400 }) : null,
         status: isPublished ? "published" : "draft",
         categoryId: hasCategory ? pick(insertedCategories).id : null,
@@ -143,7 +149,7 @@ async function seed() {
     const batch: NewComment[] = Array.from({ length: size }, () => ({
       postId: pick(allPostIds),
       authorId: pick(insertedUsers).id,
-      content: faker.lorem.sentences({ min: 1, max: 3 }),
+      content: makeComment(),
       // 10% of comments are replies to an existing comment.
       parentId:
         knownCommentIds.length > 0 && Math.random() < 0.1 ? pick(knownCommentIds) : null,
