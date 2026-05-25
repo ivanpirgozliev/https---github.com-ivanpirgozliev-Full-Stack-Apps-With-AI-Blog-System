@@ -18,7 +18,7 @@ export function Pagination({ page, pageSize, total, hrefForPage }: PaginationPro
 
   return (
     <nav
-      className="flex items-center justify-between gap-4 mt-12 pt-6 border-t border-border"
+      className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-6 border-t border-border"
       aria-label="Pagination"
     >
       <div className="text-sm text-muted">
@@ -26,29 +26,23 @@ export function Pagination({ page, pageSize, total, hrefForPage }: PaginationPro
       </div>
       <div className="flex items-center gap-2">
         {prev ? (
-          <Link
-            href={hrefForPage(prev)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted-bg transition"
-          >
+          <Link href={hrefForPage(prev)} className="btn-gradient text-sm">
             <ChevronLeft size={16} />
             Prev
           </Link>
         ) : (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border opacity-40 cursor-not-allowed">
+          <span className="btn-gradient is-disabled text-sm" aria-disabled="true">
             <ChevronLeft size={16} />
             Prev
           </span>
         )}
         {next ? (
-          <Link
-            href={hrefForPage(next)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted-bg transition"
-          >
+          <Link href={hrefForPage(next)} className="btn-gradient text-sm">
             Next
             <ChevronRight size={16} />
           </Link>
         ) : (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border opacity-40 cursor-not-allowed">
+          <span className="btn-gradient is-disabled text-sm" aria-disabled="true">
             Next
             <ChevronRight size={16} />
           </span>

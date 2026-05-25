@@ -5,7 +5,7 @@ import { formatDate, formatNumber } from "@/lib/format";
 
 export function PostCard({ post }: { post: PublicPostWithRefs }) {
   return (
-    <article className="group flex flex-col rounded-lg border border-border bg-background overflow-hidden hover:border-accent transition">
+    <article className="card group flex flex-col">
       <Link href={`/posts/${post.slug}`} className="block">
         <div className="aspect-[16/9] bg-muted-bg overflow-hidden">
           {post.coverImageUrl ? (
@@ -64,7 +64,7 @@ export function PostCard({ post }: { post: PublicPostWithRefs }) {
 
 export function PostCardSkeleton() {
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-background overflow-hidden">
+    <div className="card flex flex-col">
       <div className="aspect-[16/9] bg-muted-bg animate-pulse" />
       <div className="p-5 flex flex-col gap-3">
         <div className="h-3 w-20 bg-muted-bg rounded animate-pulse" />

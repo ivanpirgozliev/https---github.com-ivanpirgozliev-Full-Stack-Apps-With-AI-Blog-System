@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #18181b;
-  --muted: #71717a;
-  --muted-bg: #f4f4f5;
-  --border: #e4e4e7;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
+  --background: #f5f6fb;
+  --foreground: #1a1a2e;
+  --card-bg: #ffffff;
+  --muted: #64748b;
+  --muted-bg: #eef0f6;
+  --border: #e1e4ed;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --grad-start: #6366f1;
+  --grad-mid: #8b5cf6;
+  --grad-end: #ec4899;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
   --color-muted: var(--muted);
   --color-muted-bg: var(--muted-bg);
   --color-border: var(--border);
@@ -20,22 +25,103 @@
   --color-accent-hover: var(--accent-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #fafafa;
-    --muted: #a1a1aa;
-    --muted-bg: #18181b;
-    --border: #27272a;
-    --accent: #60a5fa;
-    --accent-hover: #93c5fd;
-  }
+  --scale-104: 1.04;
 }
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* ---------- Primary gradient button ----------------------------------
+ * Default: 45° three-color gradient (indigo -> violet -> pink)
+ * Hover:   2-color horizontal linear gradient + lift + glow + scale-104
+ * Use on every primary action (<button>, <a> styled as button).
+ */
+.btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-image: linear-gradient(
+    45deg,
+    var(--grad-start) 0%,
+    var(--grad-mid) 50%,
+    var(--grad-end) 100%
+  );
+  color: white;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px -1px rgba(99, 102, 241, 0.28);
+  transition:
+    background-image 350ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+  transform: scale(1);
+  will-change: transform;
+}
+.btn-gradient:hover {
+  background-image: linear-gradient(
+    to right,
+    var(--grad-mid) 0%,
+    var(--grad-end) 100%
+  );
+  transform: scale(1.04);
+  box-shadow: 0 8px 24px -4px rgba(139, 92, 246, 0.4);
+}
+.btn-gradient:active {
+  transform: scale(0.98);
+}
+.btn-gradient:disabled,
+.btn-gradient[aria-disabled="true"],
+.btn-gradient.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Subtle secondary variant for less-loud buttons (icon buttons, ghost) */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: background-color 150ms ease, transform 200ms ease;
+}
+.btn-ghost:hover {
+  background: var(--muted-bg);
+  transform: scale(1.04);
+}
+
+/* ---------- Elevated card -------------------------------------------- */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 1px 2px 0 rgba(15, 23, 42, 0.04),
+    0 1px 3px 0 rgba(15, 23, 42, 0.06);
+  transition:
+    transform 250ms ease,
+    box-shadow 250ms ease,
+    border-color 250ms ease;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow:
+    0 10px 30px -8px rgba(15, 23, 42, 0.12),
+    0 4px 12px -4px rgba(99, 102, 241, 0.12);
+  transform: translateY(-2px);
 }
 
 /* Prose styles for markdown post content */

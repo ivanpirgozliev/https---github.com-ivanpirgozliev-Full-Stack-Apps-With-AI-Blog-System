@@ -37,10 +37,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               className="w-full pl-10 pr-3 py-2.5 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2.5 rounded-md bg-accent text-white font-medium hover:bg-accent-hover transition"
-          >
+          <button type="submit" className="btn-gradient">
             Search
           </button>
         </form>

@@ -6,7 +6,7 @@ export async function SiteHeader() {
   const user = await getCurrentUser();
 
   return (
-    <header className="border-b border-border bg-background sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="border-b border-border bg-background/80 sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/70 shadow-sm">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="font-semibold text-lg tracking-tight">
           Blog<span className="text-accent">.</span>
@@ -24,7 +24,7 @@ export async function SiteHeader() {
         <div className="flex items-center gap-2">
           <Link
             href="/search"
-            className="p-2 rounded-md hover:bg-muted-bg transition text-muted"
+            className="btn-ghost text-muted"
             aria-label="Search"
             title="Search"
           >
@@ -32,10 +32,7 @@ export async function SiteHeader() {
           </Link>
           {user ? (
             <div className="flex items-center gap-2">
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium px-3 py-1.5 rounded-md hover:bg-muted-bg transition"
-              >
+              <Link href="/dashboard" className="btn-gradient text-sm">
                 Dashboard
               </Link>
               <span className="hidden sm:inline text-sm text-muted">
@@ -48,10 +45,7 @@ export async function SiteHeader() {
               </span>
             </div>
           ) : (
-            <Link
-              href="/auth/login"
-              className="text-sm font-medium px-3 py-1.5 rounded-md bg-accent text-white hover:bg-accent-hover transition"
-            >
+            <Link href="/auth/login" className="btn-gradient text-sm">
               Sign in
             </Link>
           )}
