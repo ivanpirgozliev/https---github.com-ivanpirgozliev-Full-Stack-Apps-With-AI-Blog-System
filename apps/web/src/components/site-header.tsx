@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { LogOut, Search, Shield } from "lucide-react";
+import { logoutAction } from "@/app/auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function SiteHeader() {
@@ -32,17 +33,29 @@ export async function SiteHeader() {
           </Link>
           {user ? (
             <div className="flex items-center gap-2">
+              {user.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="btn-ghost text-sm"
+                  title="Admin panel"
+                >
+                  <Shield size={16} />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
               <Link href="/dashboard" className="btn-gradient text-sm">
                 Dashboard
               </Link>
-              <span className="hidden sm:inline text-sm text-muted">
-                {user.name}
-                {user.role === "admin" && (
-                  <span className="ml-1.5 inline-block text-[10px] uppercase tracking-wider bg-accent text-white px-1.5 py-0.5 rounded">
-                    Admin
-                  </span>
-                )}
-              </span>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="btn-ghost text-sm text-muted"
+                  title={`Sign out (${user.name})`}
+                  aria-label="Sign out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </form>
             </div>
           ) : (
             <Link href="/auth/login" className="btn-gradient text-sm">

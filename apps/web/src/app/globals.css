@@ -102,6 +102,33 @@ body {
   transform: scale(1.04);
 }
 
+/* ---------- Form input ----------------------------------------------- */
+.input,
+.textarea,
+.select {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font: inherit;
+  line-height: 1.5;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
 /* ---------- Elevated card -------------------------------------------- */
 .card {
   background: var(--card-bg);

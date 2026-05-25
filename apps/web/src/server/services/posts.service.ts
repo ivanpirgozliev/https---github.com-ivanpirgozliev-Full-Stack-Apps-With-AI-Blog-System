@@ -87,6 +87,17 @@ export async function getPostBySlug(slug: string): Promise<PublicPostWithRefs | 
   return row ? toPublicPostWithRefs(row) : null;
 }
 
+export async function getPostById(id: number): Promise<PublicPostWithRefs | null> {
+  const row = await db.query.posts.findFirst({
+    where: eq(posts.id, id),
+    with: {
+      author: { columns: { id: true, name: true, avatarUrl: true } },
+      category: { columns: { id: true, name: true, slug: true } },
+    },
+  });
+  return row ? toPublicPostWithRefs(row) : null;
+}
+
 export interface CreatePostInput {
   authorId: string;
   title: string;
