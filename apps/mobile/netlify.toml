@@ -1,0 +1,27 @@
+# Netlify site config for apps/mobile (Expo web export).
+# In the Netlify UI for this site, set:
+#   • Base directory:       apps/mobile
+#   • Branch to deploy:     main
+#
+# Required env var (Site settings → Environment variables):
+#   EXPO_PUBLIC_API_URL       https://<your-web-site>.netlify.app
+#                              (the public URL of the apps/web deployment)
+#
+# Anything prefixed `EXPO_PUBLIC_` is baked into the JS bundle at build time,
+# so changing it requires a re-deploy — not a runtime swap.
+
+[build]
+  command = "cd ../.. && pnpm install --frozen-lockfile && pnpm --filter mobile exec expo export --platform web --output-dir dist"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NETLIFY_USE_PNPM = "true"
+  NPM_FLAGS = "--no-strict-peer-dependencies"
+
+# SPA fallback: expo-router uses client-side routing, so every unknown URL
+# should be served the root `index.html`.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

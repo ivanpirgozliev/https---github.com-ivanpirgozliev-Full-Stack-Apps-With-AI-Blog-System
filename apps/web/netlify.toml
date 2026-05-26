@@ -1,0 +1,32 @@
+# Netlify site config for apps/web (Next.js + API).
+# In the Netlify UI for this site, set:
+#   • Base directory:       apps/web
+#   • Branch to deploy:     main
+# Everything else lives in this file.
+#
+# Required env vars (Site settings → Environment variables — never commit):
+#   DATABASE_URL              postgresql://… (Neon production branch)
+#   JWT_SECRET                32+ char random hex
+#   R2_ACCOUNT_ID
+#   R2_ACCESS_KEY_ID
+#   R2_SECRET_ACCESS_KEY
+#   R2_BUCKET_NAME
+#   R2_ENDPOINT               https://<account-id>.r2.cloudflarestorage.com
+#   R2_PUBLIC_BASE_URL        https://pub-<hash>.r2.dev
+
+[build]
+  # `cd ../..` so pnpm sees the workspace root and can hoist deps for all
+  # packages. Without it, pnpm only links apps/web's direct deps and the
+  # workspace alias @blog/shared breaks.
+  command = "cd ../.. && pnpm install --frozen-lockfile && pnpm --filter web build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Force pnpm regardless of what Netlify auto-detects from lockfiles.
+  NETLIFY_USE_PNPM = "true"
+  # Don't choke if a peer dep is missing (RN/Expo deps trip this on Linux).
+  NPM_FLAGS = "--no-strict-peer-dependencies"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
