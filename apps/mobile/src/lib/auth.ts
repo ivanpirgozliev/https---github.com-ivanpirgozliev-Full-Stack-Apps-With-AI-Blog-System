@@ -1,23 +1,12 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import * as SecureStore from "expo-secure-store";
 import type { LoginInput, PublicUser, RegisterInput } from "@blog/shared";
 import { api } from "./api";
+import { tokenStorage } from "./token-storage";
 
 // The KEY is just a lookup identifier — the actual JWT value is stored
-// encrypted (iOS Keychain / Android Keystore). It's safe to be a public
-// constant; renaming it gives no security benefit.
+// in Keychain/Keystore on native, or localStorage on web (see token-storage.ts
+// for the trade-off rationale). It's safe to be a public constant.
 const TOKEN_KEY = "blog_auth_token";
-
-// WHEN_UNLOCKED_THIS_DEVICE_ONLY:
-// - iOS: blocks the token from syncing to iCloud Keychain or being restored
-//   from an iCloud backup to a different device.
-// - Android: best-effort; expo-secure-store uses an Android Keystore-backed
-//   key that's similarly device-bound.
-// Trade-off: if the user restores from backup to a new phone, they'll need
-// to sign in again — acceptable for our threat model.
-const SECURE_OPTS: SecureStore.SecureStoreOptions = {
-  keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-};
 
 interface AuthState {
   user: PublicUser | null;
@@ -46,17 +35,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(me.user);
     } catch {
       setUser(null);
-      await SecureStore.deleteItemAsync(TOKEN_KEY, SECURE_OPTS);
+      await tokenStorage.remove(TOKEN_KEY);
       setToken(null);
     }
   }, []);
 
-  // Hydrate token from SecureStore on first mount.
+  // Hydrate token from storage on first mount.
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const stored = await SecureStore.getItemAsync(TOKEN_KEY, SECURE_OPTS);
+        const stored = await tokenStorage.get(TOKEN_KEY);
         if (!alive) return;
         if (stored) {
           setToken(stored);
@@ -75,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await api<{ user: PublicUser; token: string }>("/api/v1/auth/login", {
       body: input,
     });
-    await SecureStore.setItemAsync(TOKEN_KEY, result.token, SECURE_OPTS);
+    await tokenStorage.set(TOKEN_KEY, result.token);
     setToken(result.token);
     setUser(result.user);
   }, []);
@@ -84,13 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await api<{ user: PublicUser; token: string }>("/api/v1/auth/register", {
       body: input,
     });
-    await SecureStore.setItemAsync(TOKEN_KEY, result.token, SECURE_OPTS);
+    await tokenStorage.set(TOKEN_KEY, result.token);
     setToken(result.token);
     setUser(result.user);
   }, []);
 
   const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY, SECURE_OPTS);
+    await tokenStorage.remove(TOKEN_KEY);
     setToken(null);
     setUser(null);
   }, []);
