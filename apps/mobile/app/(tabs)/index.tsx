@@ -1,98 +1,162 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Link, router } from "expo-router";
+import { Plus, Search } from "lucide-react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { Colors, Radii, Spacing } from "@/constants/theme";
+import { PostCard } from "@/src/components/post-card";
+import { Screen } from "@/src/components/screen";
+import { useAuth } from "@/src/lib/auth";
+import { usePostsInfinite } from "@/src/hooks/use-posts";
+import { useState } from "react";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function FeedScreen() {
+  const { user } = useAuth();
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 700 ? 2 : 1;
 
-export default function HomeScreen() {
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+
+  const query = usePostsInfinite({ status: "published", search: search || undefined });
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <Screen>
+      <View style={styles.header}>
+        <Text style={styles.title}>Feed</Text>
+        {user && (
+          <Pressable style={styles.fab} onPress={() => router.push("/posts/new")}>
+            <Plus color={Colors.card} size={20} />
+          </Pressable>
+        )}
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.searchBar}>
+        <Search color={Colors.muted} size={16} />
+        <TextInput
+          placeholder="Search published posts…"
+          placeholderTextColor={Colors.muted}
+          style={styles.searchInput}
+          value={searchInput}
+          onChangeText={setSearchInput}
+          onSubmitEditing={() => setSearch(searchInput.trim())}
+          returnKeyType="search"
+        />
+        {searchInput ? (
+          <Pressable
+            onPress={() => {
+              setSearchInput("");
+              setSearch("");
+            }}
+          >
+            <Text style={styles.clear}>Clear</Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      <FlatList
+        // The `key` forces FlatList to remount when columns change, RN limitation.
+        key={`cols-${numColumns}`}
+        data={items}
+        keyExtractor={(p) => String(p.id)}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <View style={numColumns > 1 ? styles.colItem : undefined}>
+            <PostCard post={item} />
+          </View>
+        )}
+        ListEmptyComponent={
+          query.isLoading ? (
+            <ActivityIndicator color={Colors.accent} style={{ marginTop: Spacing.xxl }} />
+          ) : (
+            <Text style={styles.empty}>
+              {query.isError ? "Could not load posts." : "No posts yet."}
+            </Text>
+          )
+        }
+        onEndReached={() => {
+          if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.4}
+        refreshing={query.isRefetching}
+        onRefresh={() => query.refetch()}
+        ListFooterComponent={
+          query.isFetchingNextPage ? (
+            <ActivityIndicator color={Colors.accent} style={{ marginVertical: Spacing.lg }} />
+          ) : null
+        }
+      />
+
+      {!user && (
+        <Link href="/(auth)/login" asChild>
+          <Pressable style={styles.signinPrompt}>
+            <Text style={styles.signinPromptText}>Sign in to write a post →</Text>
+          </Pressable>
+        </Link>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: { fontSize: 24, fontWeight: "700", color: Colors.foreground },
+  fab: {
+    backgroundColor: Colors.accent,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.card,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
   },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.foreground,
+    paddingVertical: Spacing.md,
+  },
+  clear: { color: Colors.accent, fontSize: 13, fontWeight: "600" },
+  list: { padding: Spacing.lg, paddingTop: 0, gap: Spacing.md },
+  row: { gap: Spacing.md },
+  colItem: { flex: 1 },
+  empty: { textAlign: "center", color: Colors.muted, marginTop: Spacing.xxl },
+  signinPrompt: {
+    position: "absolute",
+    bottom: Spacing.lg,
+    alignSelf: "center",
+    backgroundColor: Colors.foreground,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: 999,
+  },
+  signinPromptText: { color: Colors.card, fontSize: 13, fontWeight: "600" },
 });

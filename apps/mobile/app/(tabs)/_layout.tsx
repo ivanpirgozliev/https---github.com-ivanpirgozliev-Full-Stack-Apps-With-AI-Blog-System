@@ -1,33 +1,40 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import { Home, PenSquare, User } from "lucide-react-native";
+import { Colors } from "@/constants/theme";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: Colors.accent,
+        tabBarInactiveTintColor: Colors.muted,
+        tabBarStyle: {
+          backgroundColor: Colors.card,
+          borderTopColor: Colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+      }}
+    >
       <Tabs.Screen
         name="index"
+        options={{ title: "Feed", tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> }}
+      />
+      <Tabs.Screen
+        name="my-posts"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "My posts",
+          tabBarIcon: ({ color, size }) => <PenSquare color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="profile"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tabs>
