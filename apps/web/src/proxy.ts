@@ -7,11 +7,13 @@ const ADMIN_PATH_PREFIX = "/admin";
 /**
  * First-pass auth gate for protected sections.
  *
- * Re-verification still happens in services — middleware is best-effort UX
+ * Re-verification still happens in services — proxy is best-effort UX
  * (redirect on the edge) and a single source of truth for protected routes,
  * but it is *not* the only line of defense.
+ *
+ * Renamed from `middleware.ts` per Next.js 16's proxy convention.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return redirectToLogin(req);
 
