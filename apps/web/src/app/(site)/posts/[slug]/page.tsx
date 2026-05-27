@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { Eye, MessageCircle } from "lucide-react";
 import { MarkdownContent } from "@/components/markdown-content";
 import { formatDate, formatNumber } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
 import { listCommentsForPost } from "@/server/services/comments.service";
 import { getPostBySlug, incrementViews } from "@/server/services/posts.service";
+import { CommentForm } from "./comment-form";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -30,7 +32,10 @@ export default async function PostPage({ params }: PostPageProps) {
   // Increment views; don't block the page on it.
   void incrementViews(post.id);
 
-  const comments = await listCommentsForPost({ postId: post.id, pageSize: 50 });
+  const [comments, currentUser] = await Promise.all([
+    listCommentsForPost({ postId: post.id, pageSize: 50 }),
+    getCurrentUser(),
+  ]);
 
   return (
     <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10">
@@ -100,12 +105,19 @@ export default async function PostPage({ params }: PostPageProps) {
           </ul>
         )}
 
-        <p className="mt-8 p-4 rounded-md bg-muted-bg text-sm text-muted text-center">
-          <Link href={`/auth/login?redirect=/posts/${post.slug}`} className="text-accent hover:underline">
-            Sign in
-          </Link>{" "}
-          to leave a comment.
-        </p>
+        {currentUser ? (
+          <CommentForm slug={post.slug} />
+        ) : (
+          <p className="mt-8 p-4 rounded-md bg-muted-bg text-sm text-muted text-center">
+            <Link
+              href={`/auth/login?redirect=/posts/${post.slug}`}
+              className="text-accent hover:underline"
+            >
+              Sign in
+            </Link>{" "}
+            to leave a comment.
+          </p>
+        )}
       </section>
     </article>
   );
