@@ -55,20 +55,32 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <ul className="flex flex-col gap-3">
           {items.map((post) => (
             <li key={post.id} className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-xs text-muted mb-1">
-                  <StatusBadge status={post.status} />
-                  <span>·</span>
-                  <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
-                  <span>·</span>
-                  <span>{formatNumber(post.viewCount)} views</span>
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                {post.coverImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.coverImageUrl}
+                    alt=""
+                    className="w-20 h-14 object-cover rounded shrink-0"
+                  />
+                ) : (
+                  <div className="w-20 h-14 rounded shrink-0 bg-muted-bg" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-xs text-muted mb-1">
+                    <StatusBadge status={post.status} />
+                    <span>·</span>
+                    <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
+                    <span>·</span>
+                    <span>{formatNumber(post.viewCount)} views</span>
+                  </div>
+                  <Link
+                    href={`/dashboard/posts/${post.id}/edit`}
+                    className="font-semibold truncate block hover:text-accent transition"
+                  >
+                    {post.title}
+                  </Link>
                 </div>
-                <Link
-                  href={`/dashboard/posts/${post.id}/edit`}
-                  className="font-semibold truncate block hover:text-accent transition"
-                >
-                  {post.title}
-                </Link>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {post.status === "published" && (
