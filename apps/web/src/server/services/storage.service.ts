@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import type { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
@@ -67,6 +68,51 @@ export async function getUploadPresignedUrl(input: {
 
 export function getPublicUrl(key: string): string {
   return `${getPublicBaseUrl()}/${encodeURI(key)}`;
+}
+
+/**
+ * Server-side direct upload to R2 — avoids browser CORS entirely by routing
+ * the file through our Next.js route handler. Used as a fallback when the
+ * presigned-URL flow hits CORS issues.
+ */
+export async function uploadDirectToR2(input: {
+  ownerId: string;
+  mimeType: string;
+  sizeBytes: number;
+  filename: string;
+  body: Uint8Array;
+}): Promise<ServiceResult<{ mediaId: string; publicUrl: string; key: string }>> {
+  const ext = extractExtension(input.filename, input.mimeType);
+  const key = `${input.ownerId}/${randomUUID()}${ext}`;
+
+  const s3 = getR2Client();
+  const params: PutObjectCommandInput = {
+    Bucket: getBucketName(),
+    Key: key,
+    Body: input.body,
+    ContentType: input.mimeType,
+    ContentLength: input.sizeBytes,
+  };
+
+  try {
+    await s3.send(new PutObjectCommand(params));
+  } catch (e) {
+    console.error("[storage.uploadDirectToR2] PUT failed", e);
+    return err("UPLOAD_FAILED", "Could not upload to storage.");
+  }
+
+  const [row] = await db
+    .insert(media)
+    .values({
+      ownerId: input.ownerId,
+      r2Key: key,
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes,
+    })
+    .returning({ id: media.id });
+  if (!row) return err("INSERT_FAILED", "Could not record media row.");
+
+  return ok({ mediaId: row.id, publicUrl: getPublicUrl(key), key });
 }
 
 export async function deleteObject(key: string): Promise<ServiceResult<{ key: string }>> {

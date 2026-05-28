@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { Camera, Loader2, X } from "lucide-react";
-import { ALLOWED_UPLOAD_MIME_TYPES, MAX_UPLOAD_SIZE_BYTES, type PresignUploadResponse } from "@blog/shared";
+import { ALLOWED_UPLOAD_MIME_TYPES, MAX_UPLOAD_SIZE_BYTES } from "@blog/shared";
 import { updateAvatarAction } from "@/app/actions/profile";
 
 interface AvatarUploaderProps {
@@ -33,28 +33,15 @@ export function AvatarUploader({ currentUrl, name }: AvatarUploaderProps) {
 
     setUploading(true);
     try {
-      const presignRes = await fetch("/api/v1/uploads/presign", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mimeType: file.type, sizeBytes: file.size, filename: file.name }),
-      });
-      const presignJson = await presignRes.json();
-      if (!presignRes.ok || !presignJson.ok) throw new Error(presignJson.error?.message ?? "Presign failed.");
-
-      const data = presignJson.data as PresignUploadResponse;
-      const putRes = await fetch(data.uploadUrl, {
-        method: "PUT",
-        headers: { "content-type": file.type },
-        body: file,
-      });
-      if (!putRes.ok) {
-        const xml = await putRes.text();
-        console.error("[R2 upload failed]", putRes.status, xml);
-        throw new Error(`Upload failed (HTTP ${putRes.status}): ${xml.slice(0, 300)}`);
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/v1/uploads/direct", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error?.message ?? `Upload failed (HTTP ${res.status}).`);
       }
-
-      setUrl(data.publicUrl);
-      await updateAvatarAction(data.publicUrl);
+      setUrl(json.data.publicUrl);
+      await updateAvatarAction(json.data.publicUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed.");
     } finally {
