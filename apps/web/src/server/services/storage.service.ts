@@ -28,11 +28,13 @@ export async function getUploadPresignedUrl(input: {
   const key = `${input.ownerId}/${randomUUID()}${ext}`;
 
   const s3 = getR2Client();
+  // Do NOT include ContentLength here — browsers cannot set Content-Length as
+  // a request header (it is forbidden by the Fetch spec), so including it in
+  // the signed headers causes R2 to return 403 on every browser PUT.
   const cmd = new PutObjectCommand({
     Bucket: getBucketName(),
     Key: key,
     ContentType: input.mimeType,
-    ContentLength: input.sizeBytes,
   });
 
   let uploadUrl: string;
