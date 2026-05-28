@@ -23,6 +23,10 @@ export function getR2Client(): S3Client {
     },
     // R2 requires path-style addressing (bucket in the URL path, not subdomain).
     forcePathStyle: true,
+    // Don't auto-add CRC32 checksum to presigned URLs — R2 rejects PUTs
+    // from browser clients that omit the matching x-amz-checksum-crc32 header.
+    requestChecksumCalculation: "when_required",
+    responseChecksumValidation: "when_required",
   });
   return cached;
 }
