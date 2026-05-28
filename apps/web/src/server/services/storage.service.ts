@@ -98,7 +98,11 @@ export async function uploadDirectToR2(input: {
     await s3.send(new PutObjectCommand(params));
   } catch (e) {
     console.error("[storage.uploadDirectToR2] PUT failed", e);
-    return err("UPLOAD_FAILED", "Could not upload to storage.");
+    const detail =
+      e instanceof Error
+        ? `${e.name}: ${e.message}`
+        : "Unknown error";
+    return err("UPLOAD_FAILED", `R2 rejected upload — ${detail}`);
   }
 
   const [row] = await db
