@@ -22,6 +22,15 @@ export async function getUserById(id: string): Promise<PublicUser | null> {
   return user ? toPublicUser(user) : null;
 }
 
+export async function updateUserAvatar(id: string, avatarUrl: string | null): Promise<PublicUser | null> {
+  const [user] = await db
+    .update(users)
+    .set({ avatarUrl })
+    .where(eq(users.id, id))
+    .returning();
+  return user ? toPublicUser(user) : null;
+}
+
 export async function updateUserRole(id: string, role: UserRole): Promise<PublicUser | null> {
   const [user] = await db
     .update(users)

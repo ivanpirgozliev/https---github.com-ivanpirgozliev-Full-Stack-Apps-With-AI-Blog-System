@@ -51,9 +51,14 @@ export async function SiteHeader() {
                 className="flex items-center gap-2 btn-ghost text-sm"
                 title={user.name}
               >
-                <span className="w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                ) : (
+                  <span className="w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center shrink-0">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
                 <span className="hidden sm:inline max-w-[120px] truncate">{user.name}</span>
               </Link>
               <form action={logoutAction}>
