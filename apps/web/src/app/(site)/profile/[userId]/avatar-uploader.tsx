@@ -47,7 +47,11 @@ export function AvatarUploader({ currentUrl, name }: AvatarUploaderProps) {
         headers: { "content-type": file.type },
         body: file,
       });
-      if (!putRes.ok) throw new Error(`Upload failed (HTTP ${putRes.status}).`);
+      if (!putRes.ok) {
+        const xml = await putRes.text();
+        console.error("[R2 upload failed]", putRes.status, xml);
+        throw new Error(`Upload failed (HTTP ${putRes.status}): ${xml.slice(0, 300)}`);
+      }
 
       setUrl(data.publicUrl);
       await updateAvatarAction(data.publicUrl);
