@@ -43,7 +43,15 @@ export default async function AdminUsersPage({ searchParams }: UsersPageProps) {
             {users.map((u) => (
               <tr key={u.id} className="hover:bg-muted-bg/50">
                 <td className="px-4 py-3 font-medium">
-                  <Link href={`/profile/${u.id}`} className="hover:text-accent">
+                  <Link href={`/profile/${u.id}`} className="flex items-center gap-2 hover:text-accent">
+                    {u.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <span className="w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center shrink-0">
+                        {u.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                     {u.name}
                   </Link>
                 </td>
