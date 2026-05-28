@@ -8,34 +8,38 @@ import { Pagination } from "@/components/pagination";
 export const metadata = { title: "Dashboard" };
 
 interface DashboardPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  // Middleware enforces auth, but services also re-check. Non-null assertion is safe here.
   const user = (await getCurrentUser())!;
-  const { page: pageStr } = await searchParams;
+  const { page: pageStr, status: statusParam } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageStr ?? "1", 10) || 1);
   const pageSize = 20;
+
+  const status =
+    statusParam === "published" ? "published" :
+    statusParam === "draft" ? "draft" :
+    undefined;
 
   const { items, total } = await listPosts({
     page,
     pageSize,
     authorId: user.id,
-    // No status filter — show drafts + published together
+    status,
   });
 
-  const drafts = items.filter((p) => p.status === "draft").length;
-  const published = items.filter((p) => p.status === "published").length;
+  const filterHref = (s?: string) =>
+    s ? `/dashboard?status=${s}` : "/dashboard";
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
           <p className="text-sm text-muted mb-1">Welcome back, {user.name}</p>
           <h1 className="text-3xl font-bold tracking-tight">Your posts</h1>
           <p className="mt-1 text-sm text-muted">
-            {total.toLocaleString()} total on this page · {published} published · {drafts} drafts
+            {total.toLocaleString()} {status ?? "total"}
           </p>
         </div>
         <Link href="/dashboard/posts/new" className="btn-gradient">
@@ -44,9 +48,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </Link>
       </header>
 
+      <nav className="flex items-center gap-2 mb-6 text-sm">
+        <FilterLink active={!status} href={filterHref()}>All</FilterLink>
+        <FilterLink active={status === "published"} href={filterHref("published")}>Published</FilterLink>
+        <FilterLink active={status === "draft"} href={filterHref("draft")}>Drafts</FilterLink>
+      </nav>
+
       {items.length === 0 ? (
         <div className="card p-10 text-center">
-          <p className="text-muted mb-4">You haven&apos;t written anything yet.</p>
+          <p className="text-muted mb-4">
+            {status ? `No ${status} posts yet.` : "You haven't written anything yet."}
+          </p>
           <Link href="/dashboard/posts/new" className="btn-gradient">
             <Plus size={16} />
             Write your first post
@@ -85,18 +97,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {post.status === "published" && (
-                  <Link
-                    href={`/posts/${post.slug}`}
-                    className="btn-ghost text-xs"
-                    target="_blank"
-                  >
+                  <Link href={`/posts/${post.slug}`} className="btn-ghost text-xs" target="_blank">
                     View
                   </Link>
                 )}
-                <Link
-                  href={`/dashboard/posts/${post.id}/edit`}
-                  className="btn-ghost text-xs"
-                >
+                <Link href={`/dashboard/posts/${post.id}/edit`} className="btn-ghost text-xs">
                   <PenSquare size={14} />
                   Edit
                 </Link>
@@ -110,9 +115,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         page={page}
         pageSize={pageSize}
         total={total}
-        hrefForPage={(p) => `/dashboard?page=${p}`}
+        hrefForPage={(p) => `/dashboard?page=${p}${status ? `&status=${status}` : ""}`}
       />
     </div>
+  );
+}
+
+function FilterLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={
+        active
+          ? "px-3 py-1.5 rounded-md bg-accent text-white font-medium"
+          : "px-3 py-1.5 rounded-md hover:bg-muted-bg text-muted hover:text-foreground transition"
+      }
+    >
+      {children}
+    </Link>
   );
 }
 
