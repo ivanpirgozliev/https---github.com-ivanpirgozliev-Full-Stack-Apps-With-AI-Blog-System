@@ -1,36 +1,305 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blog System — SoftUni Capstone Project
 
-## Getting Started
+A full-stack, multi-platform blog system built as a SoftUni Capstone Project. The monorepo contains a **Next.js 16 web app**, an **Expo SDK 54 mobile app**, and a **shared TypeScript package**, all backed by Neon Postgres and Cloudflare R2.
 
-First, run the development server:
+## Live URLs
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| App | URL |
+|-----|-----|
+| Web | https://full-stack-apps-blog-system.netlify.app |
+| Mobile (Expo web export) | https://blog-system-mobile-app.netlify.app |
+
+## Features
+
+- JWT authentication (register, login, persistent sessions)
+- Create, edit, publish, and delete blog posts with cover images
+- Markdown content with live preview
+- Category and tag organisation
+- Comments (threaded, with replies)
+- Admin panel — manage all users, posts, and categories
+- Full-text search across published posts
+- Infinite-scroll feed with pull-to-refresh on mobile
+- Presigned direct-to-R2 image uploads (no server passthrough)
+- CORS-ready REST API consumed by both web and mobile
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    subgraph Client Layer
+        W[Next.js 16 Web App<br/>Server Components + Server Actions]
+        M[Expo SDK 54 Mobile App<br/>React Native + Expo Router]
+    end
+
+    subgraph Edge / API Layer
+        P[proxy.ts<br/>CORS · Auth gate · Preflight]
+        API[REST API<br/>/api/v1/*<br/>Route Handlers]
+    end
+
+    subgraph Data Layer
+        DB[(Neon Postgres<br/>Drizzle ORM)]
+        R2[Cloudflare R2<br/>Media Storage]
+    end
+
+    subgraph Auth
+        JWT[JWT · jose HS256<br/>7-day expiry]
+        BC[bcryptjs<br/>10 rounds]
+    end
+
+    W -->|Server Actions| API
+    M -->|Bearer token fetch| API
+    P --> API
+    API --> DB
+    API --> JWT
+    JWT --> BC
+    M -->|Presigned PUT| R2
+    W -->|Presigned PUT| R2
+    API -->|Presigned URL| R2
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Request flow — mobile login
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+Phone (Expo Go)
+  → fetch POST /api/v1/auth/login  (Bearer token in header)
+  → proxy.ts attaches CORS headers
+  → auth.service.ts: bcrypt.compare → signToken
+  → 200 { user, token }
+  → tokenStorage (Keychain on native, localStorage on web)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Entity-Relationship Schema
 
-To learn more about Next.js, take a look at the following resources:
+```mermaid
+erDiagram
+    users {
+        uuid id PK
+        varchar email UK
+        varchar password_hash
+        varchar name
+        user_role role
+        text avatar_url
+        timestamp created_at
+        timestamp updated_at
+    }
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    categories {
+        serial id PK
+        varchar name UK
+        varchar slug UK
+        text description
+    }
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    posts {
+        serial id PK
+        uuid author_id FK
+        integer category_id FK
+        varchar title
+        varchar slug UK
+        varchar excerpt
+        text content
+        text cover_image_url
+        post_status status
+        integer view_count
+        timestamp published_at
+        timestamp created_at
+        timestamp updated_at
+    }
 
-## Deploy on Vercel
+    comments {
+        serial id PK
+        integer post_id FK
+        uuid author_id FK
+        integer parent_id FK
+        text content
+        timestamp created_at
+        timestamp updated_at
+    }
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    tags {
+        serial id PK
+        varchar name UK
+        varchar slug UK
+    }
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    post_tags {
+        integer post_id FK
+        integer tag_id FK
+    }
+
+    media {
+        uuid id PK
+        uuid owner_id FK
+        varchar r2_key UK
+        varchar mime_type
+        integer size_bytes
+        timestamp created_at
+    }
+
+    users ||--o{ posts : "authors"
+    users ||--o{ comments : "writes"
+    users ||--o{ media : "owns"
+    categories ||--o{ posts : "contains"
+    posts ||--o{ comments : "has"
+    posts ||--o{ post_tags : "tagged with"
+    tags ||--o{ post_tags : "applied to"
+    comments ||--o{ comments : "replies"
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Web frontend | Next.js 16, React 19, Tailwind CSS 4 |
+| Mobile frontend | Expo SDK 54, React Native, Expo Router 4 |
+| Shared types | TypeScript package (`@blog/shared`) |
+| Database | Neon Postgres (serverless WebSocket driver) |
+| ORM | Drizzle ORM + drizzle-kit |
+| Auth | JWT (jose HS256), bcryptjs |
+| Media storage | Cloudflare R2 (S3-compatible) |
+| Package manager | pnpm 10 (hoisted node-linker) |
+| Deployment | Netlify (web: `@netlify/plugin-nextjs`, mobile: static export) |
+
+---
+
+## Project Structure
+
+```
+blog-system/
+├── apps/
+│   ├── web/                  # Next.js 16 app
+│   │   ├── src/
+│   │   │   ├── app/          # App Router pages & API routes
+│   │   │   │   ├── (site)/   # Public-facing pages
+│   │   │   │   ├── admin/    # Admin panel (role-gated)
+│   │   │   │   ├── api/v1/   # REST API route handlers
+│   │   │   │   └── actions/  # Server Actions
+│   │   │   ├── components/   # Shared React components
+│   │   │   ├── lib/          # Client-safe utilities
+│   │   │   └── server/       # Server-only code
+│   │   │       ├── db/       # Drizzle schema + client
+│   │   │       ├── lib/      # JWT, R2, ServiceResult
+│   │   │       └── services/ # Business logic
+│   │   └── netlify.toml
+│   └── mobile/               # Expo SDK 54 app
+│       ├── app/              # Expo Router screens
+│       ├── src/
+│       │   ├── components/
+│       │   ├── hooks/        # TanStack Query hooks
+│       │   └── lib/          # api.ts, auth.ts, token-storage.ts
+│       └── netlify.toml
+└── packages/
+    └── shared/               # @blog/shared — Zod schemas + TS types
+```
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 10+ (`npm i -g pnpm`)
+- A [Neon](https://neon.tech) Postgres database
+- A [Cloudflare R2](https://developers.cloudflare.com/r2/) bucket
+
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd blog-system
+pnpm install
+```
+
+### 2. Environment variables
+
+Create `apps/web/.env.local`:
+
+```env
+DATABASE_URL=postgresql://...           # Neon connection string
+JWT_SECRET=<random-32+-char-string>
+
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=<key>
+R2_SECRET_ACCESS_KEY=<secret>
+R2_BUCKET_NAME=<bucket>
+R2_PUBLIC_URL=https://pub-<id>.r2.dev
+```
+
+Create `apps/mobile/.env.local`:
+
+```env
+# LAN IP of your dev machine so Expo Go on a physical device can reach the API
+EXPO_PUBLIC_API_URL=http://192.168.x.x:3000
+```
+
+> On a physical device with Expo Go the Next.js dev server must listen on all
+> interfaces. The `dev` script already includes `--hostname 0.0.0.0`.
+
+### 3. Run database migrations
+
+```bash
+pnpm --filter web db:migrate
+```
+
+### 4. (Optional) Seed the database
+
+```bash
+pnpm --filter web db:seed
+```
+
+This creates 1 admin (`admin@blog.local` / `Admin123!`), 9 regular users
+(`user1@blog.local` … `user9@blog.local` / `User123!`), categories, posts, and comments.
+
+### 5. Start development servers
+
+```bash
+# Terminal 1 — Next.js (web + API)
+pnpm dev:web
+
+# Terminal 2 — Expo (mobile)
+pnpm dev:mobile
+```
+
+- Web: http://localhost:3000
+- Expo Metro bundler: http://localhost:8081 — scan the QR code with Expo Go
+
+---
+
+## Deployment
+
+### Web (Netlify)
+
+Set the following environment variables in the Netlify site settings:
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | Neon connection string |
+| `JWT_SECRET` | Strong random secret |
+| `R2_ENDPOINT` | `https://<account>.r2.cloudflarestorage.com` |
+| `R2_ACCESS_KEY_ID` | R2 key |
+| `R2_SECRET_ACCESS_KEY` | R2 secret |
+| `R2_BUCKET_NAME` | Bucket name |
+| `R2_PUBLIC_URL` | Public R2 URL |
+| `MOBILE_ORIGIN` | `https://<mobile-netlify-site>.netlify.app` |
+
+Build settings are in `apps/web/netlify.toml`.
+
+### Mobile (Netlify)
+
+Set one environment variable in the Netlify site settings:
+
+| Variable | Value |
+|----------|-------|
+| `EXPO_PUBLIC_API_URL` | `https://<web-netlify-site>.netlify.app` |
+
+`EXPO_PUBLIC_*` variables are baked into the JS bundle at build time — a
+redeploy is required after changing them.
+
+Build settings are in `apps/mobile/netlify.toml`.
