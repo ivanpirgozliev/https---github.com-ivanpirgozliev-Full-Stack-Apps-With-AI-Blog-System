@@ -67,7 +67,15 @@ export default async function AdminPostsPage({ searchParams }: AdminPostsPagePro
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-muted">
-                  <Link href={`/profile/${p.author.id}`} className="hover:text-accent">
+                  <Link href={`/profile/${p.author.id}`} className="flex items-center gap-2 hover:text-accent">
+                    {p.author.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.author.avatarUrl} alt={p.author.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <span className="w-6 h-6 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {p.author.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                     {p.author.name}
                   </Link>
                 </td>
