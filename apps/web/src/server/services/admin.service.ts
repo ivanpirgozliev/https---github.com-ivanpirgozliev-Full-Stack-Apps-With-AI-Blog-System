@@ -49,12 +49,12 @@ export interface RecentPost {
   slug: string;
   status: "draft" | "published";
   createdAt: Date | string;
-  author: { id: string; name: string };
+  author: { id: string; name: string; avatarUrl: string | null };
 }
 
 export async function getRecentPosts(limit = 5): Promise<RecentPost[]> {
   const rows = await db.query.posts.findMany({
-    with: { author: { columns: { id: true, name: true } } },
+    with: { author: { columns: { id: true, name: true, avatarUrl: true } } },
     orderBy: [desc(posts.createdAt)],
     limit,
   });
@@ -73,14 +73,14 @@ export interface RecentComment {
   content: string;
   createdAt: Date | string;
   post: { id: number; title: string; slug: string };
-  author: { id: string; name: string };
+  author: { id: string; name: string; avatarUrl: string | null };
 }
 
 export async function getRecentComments(limit = 5): Promise<RecentComment[]> {
   const rows = await db.query.comments.findMany({
     with: {
       post: { columns: { id: true, title: true, slug: true } },
-      author: { columns: { id: true, name: true } },
+      author: { columns: { id: true, name: true, avatarUrl: true } },
     },
     orderBy: [desc(comments.createdAt)],
     limit,

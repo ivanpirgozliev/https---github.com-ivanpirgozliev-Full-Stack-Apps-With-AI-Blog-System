@@ -69,9 +69,12 @@ export default async function AdminPage() {
                 >
                   {p.title}
                 </Link>
-                <p className="text-xs text-muted mt-0.5">
-                  by {p.author.name} · {formatDate(p.createdAt)} · {p.status}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Avatar name={p.author.name} avatarUrl={p.author.avatarUrl} size={16} />
+                  <p className="text-xs text-muted">
+                    {p.author.name} · {formatDate(p.createdAt)} · {p.status}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -83,19 +86,46 @@ export default async function AdminPage() {
             {recentComments.map((c) => (
               <li key={c.id} className="py-3 first:pt-0 last:pb-0">
                 <p className="text-sm line-clamp-2">{c.content}</p>
-                <p className="text-xs text-muted mt-0.5">
-                  by {c.author.name} on{" "}
-                  <Link href={`/posts/${c.post.slug}`} className="hover:text-accent">
-                    {c.post.title}
-                  </Link>{" "}
-                  · {formatDate(c.createdAt)}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Avatar name={c.author.name} avatarUrl={c.author.avatarUrl} size={16} />
+                  <p className="text-xs text-muted">
+                    {c.author.name} on{" "}
+                    <Link href={`/posts/${c.post.slug}`} className="hover:text-accent">
+                      {c.post.title}
+                    </Link>{" "}
+                    · {formatDate(c.createdAt)}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
         </section>
       </div>
     </div>
+  );
+}
+
+function Avatar({ name, avatarUrl, size }: { name: string; avatarUrl: string | null; size: number }) {
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={name}
+        width={size}
+        height={size}
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <span
+      className="rounded-full bg-accent text-white font-bold flex items-center justify-center shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.45 }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
   );
 }
 
