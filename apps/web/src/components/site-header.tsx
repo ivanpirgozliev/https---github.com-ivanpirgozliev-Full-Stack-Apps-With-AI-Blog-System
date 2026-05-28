@@ -46,11 +46,21 @@ export async function SiteHeader() {
               <Link href="/dashboard" className="btn-gradient text-sm">
                 Dashboard
               </Link>
+              <Link
+                href={`/profile/${user.id}`}
+                className="flex items-center gap-2 btn-ghost text-sm"
+                title={user.name}
+              >
+                <span className="w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden sm:inline max-w-[120px] truncate">{user.name}</span>
+              </Link>
               <form action={logoutAction}>
                 <button
                   type="submit"
                   className="btn-ghost text-sm text-muted"
-                  title={`Sign out (${user.name})`}
+                  title="Sign out"
                   aria-label="Sign out"
                 >
                   <LogOut size={16} />

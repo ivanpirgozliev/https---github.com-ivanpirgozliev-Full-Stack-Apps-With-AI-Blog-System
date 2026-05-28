@@ -32,6 +32,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
+          <p className="text-sm text-muted mb-1">Welcome back, {user.name}</p>
           <h1 className="text-3xl font-bold tracking-tight">Your posts</h1>
           <p className="mt-1 text-sm text-muted">
             {total.toLocaleString()} total on this page · {published} published · {drafts} drafts
