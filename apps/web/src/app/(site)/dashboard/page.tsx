@@ -123,14 +123,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
 function FilterLink({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
   return (
-    <Link
-      href={href}
-      className={
-        active
-          ? "px-3 py-1.5 rounded-md bg-accent text-white font-medium"
-          : "px-3 py-1.5 rounded-md hover:bg-muted-bg text-muted hover:text-foreground transition"
-      }
-    >
+    <Link href={href} className={active ? "btn-gradient text-sm" : "btn-ghost text-sm text-muted"}>
       {children}
     </Link>
   );
