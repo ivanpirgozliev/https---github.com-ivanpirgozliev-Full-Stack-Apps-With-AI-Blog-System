@@ -51,7 +51,24 @@ export function PostCard({ post }: { post: PublicPostWithRefs }) {
         )}
 
         <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-border">
-          <span className="truncate">By {post.author.name}</span>
+          <Link
+            href={`/profile/${post.author.id}`}
+            className="flex items-center gap-1.5 hover:text-accent transition min-w-0"
+          >
+            {post.author.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.author.avatarUrl}
+                alt={post.author.name}
+                className="w-5 h-5 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <span className="w-5 h-5 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                {post.author.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="truncate">{post.author.name}</span>
+          </Link>
           <span className="flex items-center gap-1 shrink-0">
             <Eye size={14} />
             {formatNumber(post.viewCount)}
