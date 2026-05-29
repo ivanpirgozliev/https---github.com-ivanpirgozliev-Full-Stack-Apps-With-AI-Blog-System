@@ -14,13 +14,16 @@ A full-stack, multi-platform blog system built as a SoftUni Capstone Project. Th
 - JWT authentication (register, login, persistent sessions)
 - Create, edit, publish, and delete blog posts with cover images
 - Markdown content with live preview
+- User avatars — upload from profile page, shown across feed, cards, comments, admin
 - Category and tag organisation
-- Comments (threaded, with replies)
+- Comments on posts (with sign-in gate)
 - Admin panel — manage all users, posts, and categories
 - Full-text search across published posts
+- Dashboard post filter — All / Published / Drafts
 - Infinite-scroll feed with pull-to-refresh on mobile
-- Presigned direct-to-R2 image uploads (no server passthrough)
+- Server-side R2 uploads — files stream through `/api/v1/uploads/direct`, no browser CORS dance
 - CORS-ready REST API consumed by both web and mobile
+- Unit tests (Vitest) + GitHub Actions CI (lint · typecheck · test)
 
 ---
 
@@ -54,9 +57,21 @@ graph TD
     API --> DB
     API --> JWT
     JWT --> BC
-    M -->|Presigned PUT| R2
-    W -->|Presigned PUT| R2
-    API -->|Presigned URL| R2
+    API -->|S3 PutObject| R2
+```
+
+### Upload flow (web)
+
+Direct browser → R2 uploads required exact CORS matching plus signed `Content-Length`, both of which the browser Fetch API restricts. The flow was simplified to route through the API:
+
+```
+Browser (FormData)
+  → POST /api/v1/uploads/direct
+  → route validates auth + size + mime
+  → storage.service → S3Client.send(PutObjectCommand)
+  → R2 stores object
+  → API responds with public URL
+  → client updates UI / persists URL via Server Action
 ```
 
 ### Request flow — mobile login
@@ -177,15 +192,15 @@ blog-system/
 │   │   ├── src/
 │   │   │   ├── app/          # App Router pages & API routes
 │   │   │   │   ├── (site)/   # Public-facing pages
-│   │   │   │   ├── admin/    # Admin panel (role-gated)
-│   │   │   │   ├── api/v1/   # REST API route handlers
-│   │   │   │   └── actions/  # Server Actions
+│   │   │   │   ├── api/v1/   # REST API route handlers (incl. uploads/direct)
+│   │   │   │   └── actions/  # Server Actions (auth, posts, comments, profile)
 │   │   │   ├── components/   # Shared React components
 │   │   │   ├── lib/          # Client-safe utilities
-│   │   │   └── server/       # Server-only code
-│   │   │       ├── db/       # Drizzle schema + client
-│   │   │       ├── lib/      # JWT, R2, ServiceResult
-│   │   │       └── services/ # Business logic
+│   │   │   ├── server/       # Server-only code
+│   │   │   │   ├── db/       # Drizzle schema + client
+│   │   │   │   ├── lib/      # JWT, R2, ServiceResult, slug
+│   │   │   │   └── services/ # Business logic + storage
+│   │   │   └── __tests__/    # Vitest unit tests
 │   │   └── netlify.toml
 │   └── mobile/               # Expo SDK 54 app
 │       ├── app/              # Expo Router screens
@@ -229,7 +244,7 @@ R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 R2_ACCESS_KEY_ID=<key>
 R2_SECRET_ACCESS_KEY=<secret>
 R2_BUCKET_NAME=<bucket>
-R2_PUBLIC_URL=https://pub-<id>.r2.dev
+R2_PUBLIC_BASE_URL=https://pub-<id>.r2.dev
 ```
 
 Create `apps/mobile/.env.local`:
@@ -272,6 +287,33 @@ pnpm dev:mobile
 
 ---
 
+## Testing
+
+Unit tests live in `apps/web/src/__tests__/` and cover the pure
+utilities — `formatDate` / `formatNumber`, `ok` / `err` / `statusForError`,
+slug generation, and JWT sign/verify round-trips.
+
+```bash
+pnpm --filter web test         # one shot
+pnpm --filter web test:watch   # watch mode
+```
+
+`vitest.setup.ts` injects a test `JWT_SECRET` and `src/__mocks__/server-only.ts`
+stubs `server-only` so server-side files import cleanly under Node.
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`:
+
+1. `pnpm lint` (web + mobile)
+2. `pnpm typecheck` (web + mobile + shared)
+3. `pnpm --filter web test`
+
+The CI job sets a dummy `JWT_SECRET` for the test run; no real secrets ever
+touch the workflow.
+
+---
+
 ## Deployment
 
 ### Web (Netlify)
@@ -286,7 +328,7 @@ Set the following environment variables in the Netlify site settings:
 | `R2_ACCESS_KEY_ID` | R2 key |
 | `R2_SECRET_ACCESS_KEY` | R2 secret |
 | `R2_BUCKET_NAME` | Bucket name |
-| `R2_PUBLIC_URL` | Public R2 URL |
+| `R2_PUBLIC_BASE_URL` | Public R2 URL |
 | `MOBILE_ORIGIN` | `https://<mobile-netlify-site>.netlify.app` |
 
 Build settings are in `apps/web/netlify.toml`.
