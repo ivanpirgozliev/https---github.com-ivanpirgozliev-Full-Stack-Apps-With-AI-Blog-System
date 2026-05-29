@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { LogOut, Shield } from "lucide-react-native";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors, Radii, Spacing } from "@/constants/theme";
+import { Avatar } from "@/src/components/avatar";
 import { GradientButton } from "@/src/components/gradient-button";
 import { Screen } from "@/src/components/screen";
 import { useAuth } from "@/src/lib/auth";
@@ -42,9 +43,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.card}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarLetter}>{user.name.charAt(0).toUpperCase()}</Text>
-        </View>
+        <Avatar name={user.name} avatarUrl={user.avatarUrl} size={64} />
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{user.name}</Text>
@@ -88,15 +87,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.lg,
   },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarLetter: { fontSize: 28, fontWeight: "700", color: "#fff" },
   info: { flex: 1, gap: Spacing.xs },
   nameRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
   name: { fontSize: 18, fontWeight: "700", color: Colors.foreground },

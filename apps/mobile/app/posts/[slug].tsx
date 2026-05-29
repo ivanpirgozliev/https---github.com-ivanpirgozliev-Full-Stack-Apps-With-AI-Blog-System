@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { Colors, Radii, Spacing } from "@/constants/theme";
+import { Avatar } from "@/src/components/avatar";
 import { Screen } from "@/src/components/screen";
 import { ApiError } from "@/src/lib/api";
 import { useAuth } from "@/src/lib/auth";
@@ -73,7 +74,10 @@ export default function PostDetailScreen() {
               {p.excerpt ? <Text style={styles.excerpt}>{p.excerpt}</Text> : null}
 
               <View style={styles.bylineRow}>
-                <Text style={styles.byline}>By {p.author.name}</Text>
+                <View style={styles.bylineAuthor}>
+                  <Avatar name={p.author.name} avatarUrl={p.author.avatarUrl} size={24} />
+                  <Text style={styles.byline}>{p.author.name}</Text>
+                </View>
                 <Text style={styles.views}>{formatNumber(p.viewCount)} views</Text>
               </View>
 
@@ -90,7 +94,10 @@ export default function PostDetailScreen() {
           renderItem={({ item }) => (
             <View style={styles.commentItem}>
               <View style={styles.commentHead}>
-                <Text style={styles.commentAuthor}>{item.author.name}</Text>
+                <View style={styles.commentAuthorRow}>
+                  <Avatar name={item.author.name} avatarUrl={item.author.avatarUrl} size={20} />
+                  <Text style={styles.commentAuthor}>{item.author.name}</Text>
+                </View>
                 <Text style={styles.commentDate}>{formatDate(item.createdAt)}</Text>
               </View>
               <Text style={styles.commentBody}>{item.content}</Text>
@@ -168,6 +175,7 @@ const styles = StyleSheet.create({
   bylineRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: Spacing.md,
     marginTop: Spacing.md,
     borderTopWidth: 1,
@@ -175,6 +183,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     marginBottom: Spacing.lg,
   },
+  bylineAuthor: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, flex: 1 },
   byline: { fontSize: 13, color: Colors.muted },
   views: { fontSize: 13, color: Colors.muted },
   paragraph: { fontSize: 15, color: Colors.foreground, lineHeight: 24, marginBottom: Spacing.md },
@@ -186,7 +195,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   commentItem: { paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  commentHead: { flexDirection: "row", justifyContent: "space-between", marginBottom: Spacing.xs },
+  commentHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.xs },
+  commentAuthorRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
   commentAuthor: { fontSize: 14, fontWeight: "600", color: Colors.foreground },
   commentDate: { fontSize: 12, color: Colors.muted },
   commentBody: { fontSize: 14, color: Colors.foreground, lineHeight: 20 },

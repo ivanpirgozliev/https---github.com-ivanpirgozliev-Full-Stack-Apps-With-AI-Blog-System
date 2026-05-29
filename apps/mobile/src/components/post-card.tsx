@@ -3,6 +3,7 @@ import { Link } from "expo-router";
 import type { PublicPostWithRefs } from "@blog/shared";
 import { Colors, Radii, Spacing } from "../../constants/theme";
 import { formatDate, formatNumber } from "../lib/format";
+import { Avatar } from "./avatar";
 
 export function PostCard({ post }: { post: PublicPostWithRefs }) {
   return (
@@ -34,9 +35,12 @@ export function PostCard({ post }: { post: PublicPostWithRefs }) {
             </Text>
           ) : null}
           <View style={styles.footer}>
-            <Text style={styles.author} numberOfLines={1}>
-              By {post.author.name}
-            </Text>
+            <View style={styles.authorRow}>
+              <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} size={20} />
+              <Text style={styles.author} numberOfLines={1}>
+                {post.author.name}
+              </Text>
+            </View>
             <Text style={styles.views}>{formatNumber(post.viewCount)} views</Text>
           </View>
         </View>
@@ -124,11 +128,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
+  authorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
   author: {
     fontSize: 12,
     color: Colors.muted,
-    flex: 1,
-    marginRight: Spacing.sm,
+    flexShrink: 1,
   },
   views: {
     fontSize: 12,
